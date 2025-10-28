@@ -1,0 +1,4 @@
+{
+    "use_in_memory_db": false,
+    "inspect_every_device_by_default": false
+}
