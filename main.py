@@ -13,7 +13,6 @@ subprocess.call("""
         rm -f tmpfs;
         ln -s /dev/shm/inspector tmpfs;
         ln -sf "$(realpath libinspector_config.json)" tmpfs/;
-        rm -f tmpfs/debug_mem_db.db;
     """, shell=True)
 
 # Change the current working directory to tmpfs
