@@ -22,9 +22,9 @@ fi
 
 
 # Check if the service started successfully
-if ! systemctl start routersense-rpi-client &> /dev/null; then
-    echo "Starting 'routersense-rpi-client' service failed. Regenerating systemctl config..."
+if ! systemctl start routersense-raspberrypi-client &> /dev/null; then
+    echo "Starting 'routersense-raspberrypi-client' service failed. Regenerating systemctl config..."
     uv run generate_systemctl_config.py
-    systemctl status routersense-rpi-client
+    systemctl status routersense-raspberrypi-client
 fi
 
