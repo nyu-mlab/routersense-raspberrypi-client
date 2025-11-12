@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.params import Body
 import libinspector.global_state
 import subprocess
@@ -111,17 +111,33 @@ def get_cpu_usage_percent():
 
 
 @app.post("/run_sql")
-def run_sql(query: str = Body(...)):
-    """Run a SQL query."""
+async def run_sql(request: Request):
+    """
+    Run a SQL query and returns the result. The request body should be a JSON
+    object with the following keys:
+
+     - sql_query: The SQL query to run. Required
+     - params: An optional list of parameters to bind to the query.
+
+    """
+    request_dict = await request.json()
+    sql_query = request_dict['sql_query']
+    sql_params = request_dict.get('params', None)
+
+    if sql_params:
+        params = (sql_query, sql_params)
+    else:
+        params = (sql_query,)
 
     db_conn, rwlock = libinspector.global_state.db_conn_and_lock
+    cursor = db_conn.cursor()
 
     result_list = []
-    result_dict = {'result': result_list, 'input_query': query, 'error': None}
+    result_dict = {'result': result_list, 'error': None}
 
     with rwlock:
         try:
-            for row in db_conn.execute(query):
+            for row in cursor.execute(*params):
                 row_dict = dict(row)
                 for k in row_dict.keys():
                     if k.endswith('_json'):
@@ -133,27 +149,42 @@ def run_sql(query: str = Body(...)):
                 result_list.append(row_dict)
         except Exception as e:
             result_dict['error'] = str(e)
-            return result_dict
 
+    cursor.close()
     return result_dict
 
 
-
 @app.post("/run_sql_script")
-def run_sql_script(query: str = Body(...)):
-    """Run a SQL script."""
+async def run_sql_script(request: Request):
+    """
+    Run a series of SQL queries and do not return the result. The request body should be a JSON
+    object of a list, where each element is a dictionary with the following keys:
+
+     - sql_query: The SQL query to run. Required
+     - params: An optional list of parameters to bind to the query.
+
+    """
+    request_list = await request.json()
 
     db_conn, rwlock = libinspector.global_state.db_conn_and_lock
+    cursor = db_conn.cursor()
 
-    result_dict = {'input_query': query, 'error': None, 'result': None}
+    result_dict = {'error': None}
 
     with rwlock:
-        try:
-            db_conn.executescript(query)
-        except Exception as e:
-            result_dict['error'] = str(e)
-            return result_dict
+        for request_dict in request_list:
+            sql_query = request_dict['sql_query']
+            sql_params = request_dict.get('params', None)
+            if sql_params:
+                params = (sql_query, sql_params)
+            else:
+                params = (sql_query,)
+            try:
+                cursor.execute(*params)
+            except Exception as e:
+                result_dict['error'] = f'Error executing query "{sql_query}": {str(e)}'
 
+    cursor.close()
     return result_dict
 
 
