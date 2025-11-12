@@ -6,6 +6,8 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+source $HOME/.local/bin/env
+
 # Check if `uv` is installed; if not, install it
 if ! command -v uv &> /dev/null; then
     echo "Installing 'uv'..."
