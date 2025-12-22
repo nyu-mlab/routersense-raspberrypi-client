@@ -25,6 +25,8 @@ def status():
      - Disk space usage
      - SHM space usage
      - Ext IP Info
+     - Version
+     - Uptime
 
     """
     # Determine Client ID based on /home/piXX directories
@@ -88,6 +90,12 @@ def status():
     except json.JSONDecodeError:
         ip_info_dict = {"error": "Failed to parse API response"}
 
+    # Change current working directory to the directory containing this file
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+    # Get the software version with git rev-parse HEAD
+    git_version = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+
     # Return the status as a JSON object
     return {
         "client_id": client_id,
@@ -97,8 +105,17 @@ def status():
         "temperature_celsius": temp_celsius,
         "disk_usage_percent": disk_usage_percent,
         "shm_usage_percent": shm_usage_percent,
-        "ext_ip_info": ip_info_dict
+        "ext_ip_info": ip_info_dict,
+        "software_version": git_version,
+        "uptime_seconds": get_uptime_seconds()
     }
+
+
+
+def get_uptime_seconds():
+    with open("/proc/uptime", "r") as f:
+        uptime_seconds = int(float(f.readline().split()[0]))
+    return uptime_seconds
 
 
 
