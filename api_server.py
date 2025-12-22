@@ -39,6 +39,8 @@ def status():
     if client_id is None:
         return {"error": "Client ID not found"}
 
+    emergency_reboot = False
+
     # Get CPU usage as a percentage by reading /proc/stat
     cpu_percent = get_cpu_usage_percent()
 
@@ -54,6 +56,9 @@ def status():
     mem_used = mem_total - mem_free
     mem_percent = (mem_used / mem_total) * 100 if mem_total else 0
 
+    if mem_percent > 90:
+        emergency_reboot = True
+
     # Get temperature
     with open("/sys/class/thermal/thermal_zone0/temp") as f:
         temp_milli = int(f.read().strip())
@@ -63,9 +68,18 @@ def status():
     df_output = subprocess.run(['df', '/'], capture_output=True, text=True).stdout
     disk_usage_percent = int(df_output.splitlines()[1].split()[4].rstrip('%'))
 
+    if disk_usage_percent > 90:
+        emergency_reboot = True
+
     # Get SHM space usage as a percentage
     df_shm_output = subprocess.run(['df', '/dev/shm'], capture_output=True, text=True).stdout
     shm_usage_percent = int(df_shm_output.splitlines()[1].split()[4].rstrip('%'))
+
+    if shm_usage_percent > 90:
+        emergency_reboot = True
+
+    if emergency_reboot:
+        subprocess.run(['/usr/sbin/reboot'])
 
     # Get Ext IP Info
     ip_info_str = subprocess.run(['curl', base64.b64decode('aHR0cHM6Ly9hcGkuaXBpbmZvLmlvL2xpdGUvbWU/dG9rZW49OWJiN2Q2N2IwMzJhNmE=')], capture_output=True, text=True).stdout
