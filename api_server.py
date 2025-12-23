@@ -6,6 +6,7 @@ import time
 import os
 import re
 import base64
+import signal
 
 
 app = FastAPI(title="RouterSense RPi API")
@@ -59,7 +60,7 @@ def status():
     mem_percent = (mem_used / mem_total) * 100 if mem_total else 0
 
     if mem_percent > 90:
-        emergency_reboot = True
+        os.kill(os.getpid(), signal.SIGTERM)
 
     # Get temperature
     with open("/sys/class/thermal/thermal_zone0/temp") as f:
