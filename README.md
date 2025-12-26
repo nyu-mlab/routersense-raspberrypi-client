@@ -4,7 +4,7 @@ Run all of the following as the `root` user.
 
 ## Setup and run
 
-Simply run the following:
+Simply run the following (which can start/restart RouterSense):
 
 ```
 ./start.bash
