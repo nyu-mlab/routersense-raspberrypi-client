@@ -84,12 +84,10 @@ def status():
     if emergency_reboot:
         subprocess.run(['/usr/sbin/reboot'])
 
-    # Get Ext IP Info
-    ip_info_str = subprocess.run(['curl', base64.b64decode('aHR0cHM6Ly9hcGkuaXBpbmZvLmlvL2xpdGUvbWU/dG9rZW49OWJiN2Q2N2IwMzJhNmE=')], capture_output=True, text=True).stdout
     try:
-        ip_info_dict = json.loads(ip_info_str)
-    except json.JSONDecodeError:
-        ip_info_dict = {"error": "Failed to parse API response"}
+        ip_info_dict = get_ip_info()
+    except Exception:
+        ip_info_dict = {"error": "Failed to parse ip.info API response"}
 
     # Change current working directory to the directory containing this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -110,6 +108,20 @@ def status():
         "software_version": git_version,
         "uptime_seconds": get_uptime_seconds()
     }
+
+
+
+@functools.lru_cache(maxsize=1)
+def get_ip_info():
+    """
+    Get external IP information from ipinfo.io.
+
+    Cached to avoid excessive API calls.
+
+    """
+    ip_info_str = subprocess.run(['curl', base64.b64decode('aHR0cHM6Ly9hcGkuaXBpbmZvLmlvL2xpdGUvbWU/dG9rZW49OWJiN2Q2N2IwMzJhNmE=')], capture_output=True, text=True).stdout
+
+    return json.loads(ip_info_str)
 
 
 
