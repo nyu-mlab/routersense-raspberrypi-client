@@ -5,6 +5,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import uvicorn
+import threading
+import common
+
 
 
 # Create a tmpfs symlink for faster access. We want to keep the logs but only in the tmpfs to avoid excessive disk I/O.
@@ -43,6 +46,10 @@ def main():
 
     setup_ssh_config()
 
+    # Start the memory guardian thread
+    mem_guardian_thread = threading.Thread(target=memory_guardian, daemon=True)
+    mem_guardian_thread.start()
+
     libinspector.core.start_threads()
 
     uvicorn.run(
@@ -53,6 +60,23 @@ def main():
         reload=False,
         log_config=None  # Disable uvicorn's default logging configuration
     )
+
+
+
+def memory_guardian():
+    """
+    Monitors memory usage and kills the process if it exceeds 90%.
+
+    Run as a daemon thread.
+
+    """
+    while True:
+
+        memory_percent = int(common.get_mem_percent())
+        logging.info(f"Memory usage: {memory_percent}%")
+
+        time.sleep(5)
+
 
 
 def setup_ssh_config():

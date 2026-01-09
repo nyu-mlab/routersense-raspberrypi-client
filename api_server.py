@@ -6,7 +6,8 @@ import time
 import os
 import re
 import base64
-import signal
+import common
+import functools
 
 
 app = FastAPI(title="RouterSense RPi API")
@@ -51,17 +52,6 @@ def status():
     with open("/proc/loadavg") as f:
         load_avg = f.read().split()[:3]
 
-    # Get memory consumption
-    with open("/proc/meminfo") as f:
-        meminfo = f.readlines()
-    mem_total = int([x for x in meminfo if x.startswith("MemTotal:")][0].split()[1])
-    mem_free = int([x for x in meminfo if x.startswith("MemAvailable:")][0].split()[1])
-    mem_used = mem_total - mem_free
-    mem_percent = (mem_used / mem_total) * 100 if mem_total else 0
-
-    if mem_percent > 90:
-        os.kill(os.getpid(), signal.SIGTERM)
-
     # Get temperature
     with open("/sys/class/thermal/thermal_zone0/temp") as f:
         temp_milli = int(f.read().strip())
@@ -100,7 +90,7 @@ def status():
         "client_id": client_id,
         "cpu_percent": cpu_percent,
         "load_average": load_avg,
-        "memory_percent": int(mem_percent),
+        "memory_percent": int(common.get_mem_percent()),
         "temperature_celsius": temp_celsius,
         "disk_usage_percent": disk_usage_percent,
         "shm_usage_percent": shm_usage_percent,
