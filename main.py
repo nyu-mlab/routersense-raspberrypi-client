@@ -16,6 +16,7 @@ CONTROL_DIR = Path(shell_command_wrapper.BASE_DIR) / "control"
 NMAP_DIR = Path(shell_command_wrapper.BASE_DIR) / "nmap"
 MDNS_DIR = Path(shell_command_wrapper.BASE_DIR) / "mdns"
 SSDP_DIR = Path(shell_command_wrapper.BASE_DIR) / "ssdp"
+INTERFACE_DIR = Path(shell_command_wrapper.BASE_DIR) / "interface"
 
 TARGETED_MAC_FILE = CONTROL_DIR / "targeted_mac_address_list.txt"
 CONFIG_MODE_FILE = CONTROL_DIR / "is_configuration_mode.txt"
@@ -134,7 +135,16 @@ def _run_initialize_script() -> None:
 
     script_path = Path(__file__).with_name("initialize.bash")
     try:
-        subprocess.run(["bash", str(script_path)], check=True)
+        result = subprocess.run(
+            ["bash", str(script_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if result.stdout:
+            logger.info("initialize.bash stdout: %s", result.stdout.strip())
+        if result.stderr:
+            logger.info("initialize.bash stderr: %s", result.stderr.strip())
     except Exception as e:
         logger.error("Failed to run initialize script %s: %s", script_path, e)
         raise
@@ -179,7 +189,7 @@ def _loop_mdns_ssdp_helper() -> None:
     # Run mDNS discovery
     try:
         mdns_result = shell_command_wrapper.mdns_discover()
-        _write_json_snapshot(MDNS_DIR, mdns_result)
+        _write_json_snapshot(MDNS_DIR, {'timestamp': _get_epoch_seconds(), 'data': mdns_result})
     except Exception as e:
         logger.error("mDNS discovery failed: %s", e)
 
@@ -189,7 +199,7 @@ def _loop_mdns_ssdp_helper() -> None:
     # Run SSDP discovery on the default interface
     try:
         ssdp_result = shell_command_wrapper.ssdp_discover(default_interface)
-        _write_json_snapshot(SSDP_DIR, ssdp_result)
+        _write_json_snapshot(SSDP_DIR, {'timestamp': _get_epoch_seconds(), 'data': ssdp_result})
     except Exception as e:
         logger.error("SSDP discovery failed for interface %s: %s", default_interface, e)
 
@@ -224,7 +234,7 @@ def _loop_network_context_helper() -> None:
         stop_event.set()
         return
 
-    _write_json_snapshot(CONTROL_DIR / "interface", interface_info)
+    _write_json_snapshot(INTERFACE_DIR, {'timestamp': _get_epoch_seconds(), 'data': interface_info})
 
     # Save the default interface into the network context because the SSDP thread needs it
     with context_lock:
@@ -244,7 +254,7 @@ def _loop_network_context_helper() -> None:
         return
 
     # Save the nmap result to disk for debugging and historical reference
-    _write_json_snapshot(NMAP_DIR, nmap_result)
+    _write_json_snapshot(NMAP_DIR, {'timestamp': _get_epoch_seconds(), 'data': nmap_result})
 
     # Translate these MAC addresses into IP addresses using the nmap result
     targeted_ip_set = set()
