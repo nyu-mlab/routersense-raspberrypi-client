@@ -197,6 +197,10 @@ def tshark(default_interface, targeted_mac_address_list):
     if len(targeted_mac_address_list) == 0:
         raise NetworkError("Targeted MAC address list is empty")
 
+    # Kill existing dumpcap and tshark processes to avoid conflicts
+    subprocess.call(["pkill", "-9", "-f", "dumpcap"])
+    subprocess.call(["pkill", "-9", "-f", "tshark"])
+
     capture_filter = " or ".join([f"ether host {mac}" for mac in targeted_mac_address_list])
 
     tshark_dir = f"{BASE_DIR}/tshark"
@@ -232,30 +236,31 @@ def tshark(default_interface, targeted_mac_address_list):
 
 
 
-def arpspoof(default_interface, router_ip, targeted_mac_address_list, bidirectional=True):
+def arpspoof(default_interface, router_ip, targeted_ip_address_list, bidirectional=True):
     """
-    Runs arp-spoofing on all the devices in the targeted_mac_address_list against
+    Runs arp-spoofing on all the devices in the targeted_ip_address_list against
     the router. If bidirectional is True, spoof both the router and the device.
     If bidirectional is False, only spoof the target devices.
 
-    Returns the process object so that the caller can terminate it when needed.
-
     """
-    if len(targeted_mac_address_list) == 0:
-        raise NetworkError("Targeted MAC address list is empty")
+    if len(targeted_ip_address_list) == 0:
+        raise NetworkError("Targeted IP address list is empty")
 
     # Build the arpspoof command with multiple -t options
     command = ["arpspoof", "-i", default_interface]
-    for mac in targeted_mac_address_list:
-        command.extend(["-t", mac])
+    for ip in targeted_ip_address_list:
+        command.extend(["-t", ip])  # Add a -t option for each target IP address
 
     if bidirectional:
         command.append("-r")  # Poison both hosts (host and target) to capture traffic in both directions.
 
     command.append(router_ip)  # The last argument is the router IP to spoof
 
+    # Kill existing arpspoof
+    subprocess.call(["pkill", "-9", "-f", "arpspoof"])
+
     try:
-        proc = subprocess.Popen(
+        subprocess.Popen(
             command,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
@@ -265,7 +270,6 @@ def arpspoof(default_interface, router_ip, targeted_mac_address_list, bidirectio
     except Exception as e:
         raise NetworkError(f"Unexpected error: {e}")
 
-    return proc
 
 
 def mdns_discover():
