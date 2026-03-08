@@ -22,6 +22,8 @@ TARGETED_MAC_FILE = CONTROL_DIR / "targeted_mac_address_list.txt"
 CONFIG_MODE_FILE = CONTROL_DIR / "is_configuration_mode.txt"
 DEBUG_LOG_FILE = Path(shell_command_wrapper.BASE_DIR) / "debug.log"
 
+MEMORY_USE_THRESHOLD_PERCENT = 80
+
 
 logger = logging.getLogger("routersense_client")
 
@@ -161,6 +163,36 @@ def _dynamic_wait():
         if _is_configuration_mode_active()
         else DEFAULT_LOOP_INTERVAL_SECONDS
     )
+
+    # Check free space on the SHM mount
+    try:
+        result = subprocess.run(
+            ["df", "--output=pcent", "/dev/shm"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        if len(lines) >= 2:
+            # Expected output:
+            # Use%
+            #  42%
+            use_percent_str = lines[1].replace("%", "").strip()
+            use_percent = int(use_percent_str)
+            logger.debug("/dev/shm usage: %d%%", use_percent)
+        else:
+            logger.warning("Unexpected df output while checking /dev/shm usage: %r", result.stdout)
+
+    except Exception as e:
+        logger.error("Failed to check usage percent on /dev/shm: %s", e)
+
+    if use_percent >= MEMORY_USE_THRESHOLD_PERCENT:
+        stop_event.set()
+        logger.error("/dev/shm usage is at %d%% and over the threshold. Emergency stop.", use_percent)
+        clean_up(None, None)
+        return
+
 
 
 def _loop_mdns_ssdp() -> None:
