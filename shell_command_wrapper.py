@@ -208,7 +208,7 @@ def tshark(default_interface, targeted_mac_address_list):
     tshark_script = f"""
         dumpcap -q -i {default_interface} -f "{capture_filter}" -w - \
             | tshark -l -n -r - \
-                -T fields -E header=y -E separator=, -E quote=d -E occurrence=a \
+                -T fields -E separator=, -E quote=d -E occurrence=a \
                 -e frame.time_epoch \
                 -e eth.src -e eth.dst \
                 -e ip.src -e ip.dst \
