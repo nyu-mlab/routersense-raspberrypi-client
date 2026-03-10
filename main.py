@@ -4,6 +4,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+import sys
 
 import shell_command_wrapper
 import signal
@@ -407,4 +408,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         logger.error("Fatal unhandled exception in main: %s", e)
+        sys.exit(1)
 
