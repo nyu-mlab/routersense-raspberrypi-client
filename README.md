@@ -68,9 +68,9 @@ To start or restart RouterSense manually on a Raspberry Pi:
 sudo ./start.bash
 ```
 
-This will start the service if it is not running, or restart it if it is already running.
+... which starts RouterSense as a systemd service.
 
-Or run the following in the debugging mode:
+Or run the following in the debugging mode (i.e., not a systemd service), which allows you to specify which MAC addresses to allow ahead of time:
 
 ```bash
 sudo ./start_debugging.bash

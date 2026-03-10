@@ -2,18 +2,12 @@
 
 BASE_DIR="/dev/shm/routersense-lite"
 
-rm -rf "$BASE_DIR"
+mkdir -p "$BASE_DIR/control"
 
-./initialize.bash
-
-rm -f ./shm-data
-ln -s $BASE_DIR ./
-mv routersense-lite shm-data
-
-# Enter configuration mode
-touch "$BASE_DIR/control/is_configuration_mode.txt"
-
-# Add sample MAC addresses
+# Add sample MAC addresses. These are the MAC addresses of devices in my home
+# network. You can replace them with the MAC addresses of devices in your home
+# network. To find the MAC addresses of devices in your home network, take a
+# look at the `nmap/*.json` files.
 echo "16:30:2a:a2:75:b1" > "$BASE_DIR/control/targeted_mac_address_list.txt" # Laptop
 echo "1a:08:90:2f:51:e1" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Phone
 echo "20:1F:3B:82:91:3D" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Chromecast
@@ -24,4 +18,8 @@ echo "84:E3:42:61:CF:27" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # 
 echo "68:C6:3A:BF:FC:77" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Smart Plug
 echo "B0:FC:0D:C6:36:F3" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Amazon TV
 
+# Stop the service
+systemctl stop routersense-raspberrypi-client
+
+# Start the main function manually
 uv run main.py

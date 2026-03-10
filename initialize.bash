@@ -26,6 +26,9 @@ pkill -9 -f arpspoof || true
 pkill -9 -f dumpcap || true
 pkill -9 -f tshark || true
 
+# Enter configuration mode by default so that we may rescan the network fast upon startup
+touch "$BASE_DIR/control/is_configuration_mode.txt"
+
 # Install Debian packages required for RouterSense Lite. Check if the following
 # commands are available: gssdp-discover (which comes from gupnp-tools);
 # avahi-browse (from avahi-utils); nmap; arpspoof (from dsniff); tshark;

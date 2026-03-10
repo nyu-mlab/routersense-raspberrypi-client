@@ -5,7 +5,7 @@ import threading
 import time
 from pathlib import Path
 import sys
-
+import fcntl
 import shell_command_wrapper
 import signal
 
@@ -253,11 +253,6 @@ def _loop_network_context() -> None:
 
 def _loop_network_context_helper() -> None:
 
-    # Get the targeted MAC address list from the control file
-    targeted_mac_address_list = _parse_targeted_mac_list()
-    if len(targeted_mac_address_list) == 0:
-        return
-
     # Get interface info, including default interface, router IP, RPi IP, and
     # CIDR subnet.
     try:
@@ -272,6 +267,11 @@ def _loop_network_context_helper() -> None:
     # Save the default interface into the network context because the SSDP thread needs it
     with context_lock:
         network_context["default_interface"] = interface_info["default_interface"]
+
+    # Get the targeted MAC address list from the control file
+    raw_targeted_mac_address_list = _parse_targeted_mac_list()
+    if len(raw_targeted_mac_address_list) == 0:
+        return
 
     # Now run nmap to get the IP-MAC mapping for devices in the subnet. This is
     # needed for ARP spoofing.
@@ -291,11 +291,14 @@ def _loop_network_context_helper() -> None:
 
     # Translate these MAC addresses into IP addresses using the nmap result
     targeted_ip_set = set()
+    targeted_mac_set = set()
     for mac_address, host_dict in nmap_result.items():
-        if mac_address.lower() in targeted_mac_address_list:
+        mac_address = mac_address.lower()
+        if mac_address in raw_targeted_mac_address_list:
             ip_address = host_dict.get("ip_address")
             if ip_address:
                 targeted_ip_set.add(ip_address)
+                targeted_mac_set.add(mac_address)
 
     # Make sure that the router's IP is excluded from the targeted IP list, even if its MAC address is in the targeted MAC list, to avoid accidentally ARP spoofing the router against itself
     router_ip = interface_info["router_ip"]
@@ -353,7 +356,7 @@ def _loop_network_context_helper() -> None:
     try:
         shell_command_wrapper.tshark(
             interface_info["default_interface"],
-            targeted_mac_address_list,
+            targeted_mac_set,
         )
     except Exception as e:
         logger.error('Failed to start tshark: %s', e)
@@ -363,6 +366,14 @@ def _loop_network_context_helper() -> None:
 
 
 def main() -> None:
+
+    lockfile = open("/tmp/routersense_runtime.lock", "w")
+
+    try:
+        fcntl.flock(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print("Another instance of RouterSense is already running.")
+        sys.exit(1)
 
     logger.info("Starting RouterSense Raspberry Pi Client.")
 
