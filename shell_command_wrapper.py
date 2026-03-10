@@ -219,7 +219,7 @@ def tshark(default_interface, targeted_mac_address_list):
                 -e dns.qry.name -e dns.a \
                 -e tls.handshake.extensions_server_name \
                 -e frame.len -e tcp.len -e udp.length \
-            | rotatelogs -l {tshark_dir}/packets-%Y%m%d-%H%M%S.csv 15
+            | rotatelogs -l -p ./rename_done.bash {tshark_dir}/packets-%Y%m%d-%H%M%S.tmp 15
     """
     try:
         proc = subprocess.Popen(
