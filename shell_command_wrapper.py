@@ -218,8 +218,8 @@ def tshark(default_interface, targeted_mac_address_list):
                 -e tcp.seq -e tcp.ack \
                 -e dns.qry.name -e dns.a \
                 -e tls.handshake.extensions_server_name \
-                -e _ws.col.Protocol \
                 -e frame.len -e tcp.len -e udp.length \
+                -e _ws.col.Protocol \
             | rotatelogs -l -p ./rename_done.bash {tshark_dir}/packets-%Y%m%d-%H%M%S.tmp 15
     """
     try:
