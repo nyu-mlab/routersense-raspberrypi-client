@@ -9,6 +9,10 @@ fi
 # Set the system timezone to New York
 timedatectl set-timezone America/New_York
 
+# Make sure the system clock is synchronized with an NTP server to ensure
+# accurate timestamps in packet captures and logs
+systemctl restart systemd-timesyncd
+
 BASE_DIR="/dev/shm/routersense-lite"
 
 # Initialize the directory structure
