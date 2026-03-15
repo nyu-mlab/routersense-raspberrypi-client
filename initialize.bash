@@ -19,6 +19,17 @@ mkdir -p "$BASE_DIR/mdns"
 mkdir -p "$BASE_DIR/ssdp"
 mkdir -p "$BASE_DIR/tshark"
 
+# Enable IP forwarding to allow the Raspberry Pi to forward packets between
+# interfaces, which is necessary for ARP spoofing and network scanning
+sysctl -w net.ipv4.ip_forward=1
+
+# Disable ICMP redirects to prevent the system from accepting or sending them,
+# which can interfere with ARP spoofing and network scanning
+sysctl -w net.ipv4.conf.all.send_redirects=0
+sysctl -w net.ipv4.conf.default.send_redirects=0
+sysctl -w net.ipv4.conf.all.accept_redirects=0
+sysctl -w net.ipv4.conf.default.accept_redirects=0
+
 # Kill any existing arpspoof processes to avoid conflicts
 pkill -9 -f arpspoof || true
 
