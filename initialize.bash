@@ -22,6 +22,7 @@ mkdir -p "$BASE_DIR/interface"
 mkdir -p "$BASE_DIR/mdns"
 mkdir -p "$BASE_DIR/ssdp"
 mkdir -p "$BASE_DIR/tshark"
+touch "$BASE_DIR/control/targeted_mac_address_list.txt"
 
 # Enable IP forwarding to allow the Raspberry Pi to forward packets between
 # interfaces, which is necessary for ARP spoofing and network scanning
