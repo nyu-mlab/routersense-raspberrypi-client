@@ -6,8 +6,8 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Set the system timezone to Los Angeles
-timedatectl set-timezone America/Los_Angeles
+# Set the system timezone to New York
+timedatectl set-timezone America/New_York
 
 BASE_DIR="/dev/shm/routersense-lite"
 
