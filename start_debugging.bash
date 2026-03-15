@@ -8,7 +8,8 @@ mkdir -p "$BASE_DIR/control"
 # network. You can replace them with the MAC addresses of devices in your home
 # network. To find the MAC addresses of devices in your home network, take a
 # look at the `nmap/*.json` files.
-echo "16:30:2a:a2:75:b1" > "$BASE_DIR/control/targeted_mac_address_list.txt" # Laptop
+echo "#" > "$BASE_DIR/control/targeted_mac_address_list.txt" # Resets the targeted MAC address list
+echo "16:30:2a:a2:75:b1" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Laptop
 echo "1a:08:90:2f:51:e1" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Phone
 echo "20:1F:3B:82:91:3D" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Chromecast
 echo "EC:B5:FA:9B:F2:62" >> "$BASE_DIR/control/targeted_mac_address_list.txt" # Hue
